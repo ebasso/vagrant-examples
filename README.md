@@ -15,13 +15,17 @@ vagrant destroy
 
 ## Exemplos
 
-* **example01**. Criar uma VM com CentOS, com o Apache instalado via arquivo shell.
-* **example02**. Criar uma VM com CentOS, com o Apache instalado via provisão Shell
-* **example03**. Criar uma VM com CentOS, com o Apache instalado via Ansible.
+* **example01** - Criar uma VM com CentOS, com o Apache instalado via arquivo shell.
+* **example02** - Criar uma VM com CentOS, com o Apache instalado via provisão Shell
+* **example03** - Criar uma VM com CentOS, com o Apache instalado via Ansible.
+* **example04** - Criar múltiplas VMs com CentOS
+* **example05** - Criar múltiplas VMs com CentOS usando Ruby
 
 
 ## Examples
 
-* **example01**. Single box with CentOS, with Apache installed via shell file.
-* **example02**. Single box with CentOS, with Apache installed via shell provision.
-* **example03**. Single box with CentOS, with Apache installed via Ansible.
+* **example01** - Single box with CentOS, with Apache installed via shell file.
+* **example02** - Single box with CentOS, with Apache installed via shell provision.
+* **example03** - Single box with CentOS, with Apache installed via Ansible.
+* **example04** - Multiple boxes with CentOS
+* **example05** - Multiple boxes with CentOS using Ruby

@@ -1,0 +1,7 @@
+---
+- hosts: dbserver
+  become: true
+  tasks:
+    - name: "Instala MySql"
+      shell: "yum -y install mysql"
+      
