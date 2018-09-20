@@ -1,0 +1,7 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: "Instala Apache"
+      shell: "yum -y install httpd"
+      
