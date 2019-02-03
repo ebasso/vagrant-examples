@@ -1,0 +1,145 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$domain_name = ".company.com"
+$base_segment = "172.17.8."
+$public_network_interface = "en0: Wi-Fi (AirPort)"
+
+
+configure_etc_hosts = <<SCRIPT
+cat >> /etc/hosts <<EOF
+#{ $base_segment}101 master01.company.com srv1
+#{ $base_segment}102 proxy01.company.com srv2
+#{ $base_segment}103 workernode01.company.com srv3
+EOF
+SCRIPT
+
+#configure_master_ssh_keys = <<SCRIPT
+#echo "#{rsa_private_key}" >> /home/vagrant/.ssh/id_rsa
+#echo "$(cat /home/vagrant/.ssh/authorized_keys)" >> /home/vagrant/.ssh/id_rsa.pub
+#echo 'StrictHostKeyChecking no\nUserKnownHostsFile /dev/null\nLogLevel QUIET' >> /home/vagrant/.ssh/config
+#SCRIPT
+
+configure_swap_space = <<SCRIPT
+sudo rm -f /mnt/swap
+sudo fallocate -l 8g /mnt/swap
+sudo chmod 600 /mnt/swap
+sudo mkswap /mnt/swap
+sudo swapon /mnt/swap
+echo "/mnt/swap swap swap defaults 0 0" | sudo tee --append /etc/fstab > /dev/null
+echo "vm.swappiness = 60" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "vm.vfs_cache_pressure = 10" | sudo tee --append /etc/sysctl.conf > /dev/null
+sudo sysctl -p
+SCRIPT
+
+configure_performance_settings = <<SCRIPT
+echo "net.ipv4.ip_forward = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.conf.all.rp_filter = 0" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.conf.all.proxy_arp = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.tcp_keepalive_time = 600" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.tcp_keepalive_intvl = 60" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.tcp_keepalive_probes = 20" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.ip_nonlocal_bind = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.conf.all.accept_redirects = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.conf.all.send_redirects = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.conf.all.accept_source_route = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.tcp_mem = 182757 243679 365514" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.conf.all.shared_media = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv6.conf.all.disable_ipv6 = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.core.netdev_max_backlog = 182757" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.bridge.bridge-nf-call-iptables = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "fs.inotify.max_queued_events = 1048576" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "fs.inotify.max_user_instances = 1048576" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "fs.inotify.max_user_watches = 1048576" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "vm.max_map_count = 262144" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "kernel.dmesg_restrict = 0" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "* soft nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
+echo "* hard nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
+echo "root soft nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
+echo "root hard nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
+echo "* soft memlock unlimited" | sudo tee --append /etc/security/limits.conf > /dev/null
+echo "* hard memlock unlimited" | sudo tee --append /etc/security/limits.conf > /dev/null
+sudo sysctl -p
+
+echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts
+echo Y | sudo tee /sys/module/ext4/parameters/userns_mounts
+sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="cgroup_enable=memory swapaccount=1 /g' /etc/default/grub
+sudo update-grub
+SCRIPT
+
+install_kubectl = <<SCRIPT
+sudo curl -o /tmp/kubectl -LO https://storage.googleapis.com/kubernetes-release/release/v1.11.0/bin/linux/amd64/kubectl
+sudo chmod +x /tmp/kubectl
+sudo mv /tmp/kubectl /usr/local/bin/kubectl
+sudo mkdir /home/vagrant/kubectl-certs
+sudo cp /home/vagrant/cluster/cfc-certs/kubecfg.crt /home/vagrant/kubectl-certs/kubecfg.crt
+sudo cp /home/vagrant/cluster/cfc-certs/kubecfg.key /home/vagrant/kubectl-certs/kubecfg.key
+sudo chown -R vagrant:vagrant /home/vagrant/kubectl-certs/
+kubectl config set-cluster icp --server=https://#{$base_segment}.100:8001 --insecure-skip-tls-verify=true &> /dev/null
+kubectl config set-context icp --cluster=icp &> /dev/null
+kubectl config set-credentials icp --client-certificate=/home/vagrant/kubectl-certs/kubecfg.crt --client-key=/home/vagrant/kubectl-certs/kubecfg.key &> /dev/null
+kubectl config set-context icp --user=icp &> /dev/null
+kubectl config use-context icp
+SCRIPT
+
+Vagrant.configure("2") do |config|
+
+    config.vm.box = "centos/7"
+
+    config.vm.define "k8s-demo-master01" do |node|
+        node.vm.hostname = "master01" + $domain_name
+        $ip = $base_segment + "101"
+        node.vm.network "private_network", ip: $ip
+        node.vm.network "public_network", bridge: $public_network_interface, auto_config: true
+        #node.vm.synced_folder "/Users/DuffQiu/share", "/home/vagrant/share"
+
+        node.vm.provider "virtualbox" do |vb|
+            vb.memory = "4192"
+            vb.cpus = 1
+            vb.name = "k8s-demo-master01"
+        end
+    end
+    
+    config.vm.define "k8s-demo-proxy01" do |node|
+        node.vm.hostname = "proxy01" + $domain_name
+        $ip = $base_segment + "102"
+        node.vm.network "private_network", ip: $ip
+        node.vm.network "public_network", bridge: $public_network_interface, auto_config: true
+        #node.vm.synced_folder "/Users/DuffQiu/share", "/home/vagrant/share"
+
+        node.vm.provider "virtualbox" do |vb|
+            vb.memory = "4192"
+            vb.cpus = 1
+            vb.name = "k8s-demo-proxy01"
+        end
+    end
+
+    config.vm.define "k8s-demo-worker01" do |node|
+        node.vm.hostname = "worker01" + $domain_name
+        $ip = $base_segment + "103"
+        node.vm.network "private_network", ip: $ip
+        node.vm.network "public_network", bridge: $public_network_interface, auto_config: true
+        #node.vm.synced_folder "/Users/DuffQiu/share", "/home/vagrant/share"
+
+        node.vm.provider "virtualbox" do |vb|
+            vb.memory = "4192"
+            vb.cpus = 1
+            vb.name = "k8s-demo-worker01"
+        end
+    end
+
+    config.vm.synced_folder ".", "/vagrant", disabled: true
+    
+    config.ssh.forward_agent = true
+    config.ssh.forward_x11 = true
+    config.ssh.insert_key = false
+    config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
+    #
+    #
+    config.vm.provision "shell", privileged: true, inline: configure_etc_hosts, keep_color: true, name: "configure_etc_hosts"
+    #
+    #config.vm.provision "shell", privileged: false, inline: configure_master_ssh_keys, keep_color: true, name: "configure_master_ssh_keys"
+    
+end
+
+
