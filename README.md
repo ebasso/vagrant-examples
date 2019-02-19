@@ -15,17 +15,21 @@ vagrant destroy
 
 ## Exemplos
 
-* **example01** - Criar uma VM com CentOS, com o Apache instalado via arquivo shell.
-* **example02** - Criar uma VM com CentOS, com o Apache instalado via provisão Shell
-* **example03** - Criar uma VM com CentOS, com o Apache instalado via Ansible.
-* **example04** - Criar múltiplas VMs com CentOS
-* **example05** - Criar múltiplas VMs com CentOS usando Ruby
+* **deploy-db2-vagrant** - Cria uma VM com CentOS, com o DB2 instalado via shell
+* **example01-webserver-shell** - Criar uma VM com CentOS, com o Apache instalado via arquivo shell.
+* **example02-webserver-inline** - Criar uma VM com CentOS, com o Apache instalado via provisão Shell
+* **example03-webserver-ansible** - Criar uma VM com CentOS, com o Apache instalado via Ansible.
+* **example04-multiple-boxes** - Criar múltiplas VMs com CentOS
+* **example05-multiple-boxes-ruby** - Criar múltiplas VMs com CentOS usando Ruby
+* **kubernetes-vagrant-demo** - Criar múltiplas VMs com CentOS e instala o kubernetes
 
 
 ## Examples
 
-* **example01** - Single box with CentOS, with Apache installed via shell file.
-* **example02** - Single box with CentOS, with Apache installed via shell provision.
-* **example03** - Single box with CentOS, with Apache installed via Ansible.
-* **example04** - Multiple boxes with CentOS
-* **example05** - Multiple boxes with CentOS using Ruby
+* **deploy-db2-vagrant** - Single box with CentOS, with DB2 installed suing shell
+* **example01-webserver-shell** - Single box with CentOS, with Apache installed via shell file.
+* **example02-webserver-inline** - Single box with CentOS, with Apache installed via shell provision.
+* **example03-webserver-ansible** - Single box with CentOS, with Apache installed via Ansible.
+* **example04-multiple-boxes** - Multiple boxes with CentOS
+* **example05-multiple-boxes-ruby** - Multiple boxes with CentOS using Ruby
+* **kubernetes-vagrant-demo** - Multiple boxes with CentOS and install Kubernetes
