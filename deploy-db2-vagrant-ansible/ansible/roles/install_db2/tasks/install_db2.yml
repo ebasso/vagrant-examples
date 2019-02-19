@@ -1,48 +1,48 @@
 ---
 
-- name:        Cleanup Binaries directory
-file:          path={{ __tmp_dir }} state=absent
-ignore_errors: true
+- name:          Cleanup Binaries directory
+  file:          path={{ __tmp_dir }} state=absent
+  ignore_errors: true
 
-- name:        Create Binaries directory
-file:          path={{ __tmp_dir }} state=directory mode=0755
+- name:          Create Binaries directory
+  file:          path={{ __tmp_dir }} state=directory mode=0755
 
-- name:        Create Logs directory
-file:          path={{ __logs_dir }} state=directory mode=0755
+- name:          Create Logs directory
+  file:          path={{ __logs_dir }} state=directory mode=0755
 
-- name:        Download Installer
-get_url:
-  url:         "{{ __http_repository }}/{{ item.file_name }}"
-  dest:        "{{ __tmp_dir }}/{{ item.file_name }}"
-  mode:        0755
-  #checksum:    sha256:{{ item.check_sum }}
-with_items:    "{{ __this_files }}"
+- name:          Download Installer
+  get_url:
+    url:         "{{ __http_repository }}/{{ item.file_name }}"
+    dest:        "{{ __tmp_dir }}/{{ item.file_name }}"
+    mode:        0755
+    #checksum:   sha256:{{ item.check_sum }}
+  with_items:    "{{ __this_files }}"
 
-- name:        Extract Installer
-unarchive:
-  src:         "{{ __tmp_dir }}/{{ item.file_name }}"
-  dest:        "{{ __tmp_dir }}/"
-  copy:        no
-with_items:    "{{ __this_files }}"
+- name:          Extract Installer
+  unarchive:
+    src:         "{{ __tmp_dir }}/{{ item.file_name }}"
+    dest:        "{{ __tmp_dir }}/"
+    copy:        no
+  with_items:    "{{ __this_files }}"
 
-#- name:       Generate Response file
+#- name:         Generate Response file
 #  template:
-#    src:      "{{ __tpl_file }}"
-#    dest:     "{{ __rsp_file }}"
+#    src:        "{{ __tpl_file }}"
+#    dest:       "{{ __rsp_file }}"
 
-- name:        Install IBM DB2 Server
-command:
-  chdir={{ __tmp_dir }}/server_ese_u
-  ./db2_install -b /opt/ibm/db2/V11.1 -p SERVER -n
-register:      cout
-changed_when:  ( cout.stdout.find(__version_check) != -1)
+- name:          Install IBM DB2 Server
+  command:
+    chdir={{ __tmp_dir }}/server_ese_u
+    ./db2_install -b /opt/ibm/db2/V11.1 -p SERVER -n
+  register:      cout
+  changed_when:  ( cout.stdout.find(__version_check) != -1)
 
-#- debug:      var=cout
+#- debug:        var=cout
 
-- name:        Cleanup Binaries directory
-file:
-  state:       absent
-  path:        "{{ __tmp_dir }}"
+- name:          Cleanup Binaries directory
+  file:
+    state:       absent
+    path:        "{{ __tmp_dir }}"
 
 #install_db2 = <<SCRIPT
 #yum -y install libstdc++.i686 pam.i686 libaio.x86_64
