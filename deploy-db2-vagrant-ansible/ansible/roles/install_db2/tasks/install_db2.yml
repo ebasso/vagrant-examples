@@ -35,7 +35,7 @@
     chdir={{ __tmp_dir }}/server_ese_u
     ./db2_install -b /opt/ibm/db2/V11.1 -p SERVER -n
   register:      cout
-  changed_when:  ( cout.stdout.find(__version_check) != -1)
+#  changed_when:  ( cout.stdout.find(__version_check) != -1)
 
 #- debug:        var=cout
 
