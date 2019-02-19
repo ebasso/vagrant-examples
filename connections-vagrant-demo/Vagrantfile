@@ -1,0 +1,171 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$domain_name = ".company.com"
+$base_segment = "172.25.74."
+$public_network_interface = "en0: Wi-Fi (AirPort)"
+
+$sharedarea_size = 50
+
+configure_etc_hosts = <<SCRIPT
+cat > /etc/hosts <<EOF
+127.0.0.1           localhost localhost.localdomain 
+#{$base_segment}101 srv101 srv101.company.com     # DMGR, SharedArea
+#{$base_segment}102 srv102 srv102.company.com     # WAS for Connections
+#{$base_segment}103 srv103 srv103.company.com     # WAS for Forms/Viewer/Conversion
+EOF
+SCRIPT
+
+#rsa_private_key = IO.read(Vagrant::Util::Platform.fs_real_path("#{Vagrant.user_data_path}/insecure_private_key"))
+#configure_master_ssh_keys = <<SCRIPT
+#echo "#{rsa_private_key}" >> /home/vagrant/.ssh/id_rsa
+#echo "$(cat /home/vagrant/.ssh/authorized_keys)" >> /home/vagrant/.ssh/id_rsa.pub
+#echo 'StrictHostKeyChecking no\nUserKnownHostsFile /dev/null\nLogLevel QUIET' >> /home/vagrant/.ssh/config
+#SCRIPT
+
+
+configure_os_settings = <<SCRIPT
+echo "net.ipv6.conf.all.disable_ipv6 = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv6.conf.default.disable_ipv6 = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "* soft nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
+echo "* hard nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
+echo "root soft nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
+echo "root hard nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
+sudo sysctl -p
+echo "disable selinux"
+sudo setenforce 0
+sudo sed -i 's/=enforcing/=disabled/g' /etc/selinux/config
+SCRIPT
+
+install_os_required_packages = <<SCRIPT
+sudo yum update
+sudo yum install -y wget curl vim net-tools ntp lvm2 nfs-utils
+# enable ntp to sync time
+echo 'sync time'
+sudo systemctl start ntpd
+sudo systemctl enable ntpd
+SCRIPT
+
+
+add_sharedarea_volume = <<SCRIPT
+sudo pvcreate /dev/sdb
+sudo vgcreate saVg /dev/sdb
+sudo lvcreate -l 100%FREE -n saLv saVg
+sudo mkfs -t ext4 /dev/mapper/saVg-saLv
+sudo mkdir -p /opt/IBM/SharedArea
+sudo mount -t ext4 /dev/mapper/saVg-saLv /opt/IBM/SharedArea
+echo "/dev/mapper/saVg-saLv /opt/IBM/SharedArea        ext4  defaults,noatime  0    0"  | sudo tee --append /etc/fstab > /dev/null
+sudo chmod 777 /opt/IBM/SharedArea
+sudo mkdir -p /opt/IBM/MessageStore
+sudo chmod 777 /opt/IBM/MessageStore
+SCRIPT
+
+export_nfs_volume = <<SCRIPT
+echo "/opt/IBM/SharedArea #{$base_segment}102(rw,anonuid=0,anongid=0,all_squash,sync,no_wdelay) #{$base_segment}103(rw,anonuid=0,anongid=0,all_squash,sync,no_wdelay)" | sudo tee --append /etc/exports > /dev/null
+echo "/opt/IBM/MessageStore #{$base_segment}102(rw,anonuid=0,anongid=0,all_squash,sync,no_wdelay) #{$base_segment}103(rw,anonuid=0,anongid=0,all_squash,sync,no_wdelay)" | sudo tee --append /etc/exports > /dev/null
+sudo exportfs
+sudo systemctl restart nfs.service
+SCRIPT
+
+mount_nfs_volume = <<SCRIPT
+sudo mkdir -p /opt/IBM/SharedArea
+sudo chmod 777 /opt/IBM/SharedArea
+sudo mkdir -p /opt/IBM/MessageStore
+sudo chmod 777 /opt/IBM/MessageStore
+sudo mount -t nfs #{$base_segment}101:/opt/IBM/SharedArea /opt/IBM/SharedArea
+echo "#{$base_segment}101:/opt/IBM/SharedArea /opt/IBM/SharedArea        nfs  defaults  0    0"  | sudo tee --append /etc/fstab > /dev/null
+sudo mount -t nfs #{$base_segment}101:/opt/IBM/MessageStore /opt/IBM/MessageStore
+echo "#{$base_segment}101:/opt/IBM/MessageStore /opt/IBM/MessageStore        nfs  defaults  0    0"  | sudo tee --append /etc/fstab > /dev/null
+SCRIPT
+
+
+user_home_path = ENV['HOME']
+if Vagrant::Util::Platform.windows?
+    user_home_path = Vagrant::Util::Platform.fs_real_path(ENV['USERPROFILE'])
+end
+#sharedarea_storage_disk = Vagrant::Util::Platform.fs_real_path("#{user_home_path}/VirtualBox VMs/connections-demo-srv101/sharedarea_storage_disk.vmdk")
+sharedarea_storage_disk = "sharedarea_storage_disk.vmdk"
+
+Vagrant.configure("2") do |config|
+
+    config.vm.box = "centos/7"
+
+    config.vm.define "connections-demo-srv101" do |node|   
+        node.vm.hostname = "srv101" + $domain_name
+        $ip = $base_segment + "101"
+        node.vm.network "private_network", ip: $ip
+        node.vm.network "public_network", bridge: $public_network_interface, auto_config: true
+        #node.vm.synced_folder "/Users/DuffQiu/share", "/home/vagrant/share"
+
+        node.vm.provider "virtualbox" do |vb|
+            vb.memory = "8192"
+            vb.cpus = 1
+            vb.name = "connections-demo-srv101"
+            
+            unless File.exist?("#{sharedarea_storage_disk}")
+                vb.customize ['createmedium', 'disk', '--filename', "#{sharedarea_storage_disk}", '--format', 'VMDK', '--size', 50 * 1024]
+            end
+            vb.customize ['storagectl', :id, '--name', 'SATA', '--add', 'sata', '--hostiocache', 'on'] # use host I/O cache
+            vb.customize ['storageattach', :id, '--storagectl', 'SATA', '--port', 0, '--device', 0, '--type', 'hdd', '--nonrotational', 'on', '--medium', "#{sharedarea_storage_disk}"]
+
+            vb.customize ["modifyvm", :id, "--audio", "none"] # turn audio off
+            vb.customize ["modifyvm", :id, "--clipboard", "disabled"] # disable clipboard
+        end
+        node.vm.provision "shell", privileged: false, inline: add_sharedarea_volume, keep_color: true, name: "add_sharedarea_volume"
+        node.vm.provision "shell", privileged: false, inline: export_nfs_volume, keep_color: true, name: "export_nfs_volume"
+    end
+
+
+
+    config.vm.define "connections-demo-srv102" do |node|   
+        node.vm.hostname = "srv102" + $domain_name
+        $ip = $base_segment + "102"
+        node.vm.network "private_network", ip: $ip
+        node.vm.network "public_network", bridge: $public_network_interface, auto_config: true
+        #node.vm.synced_folder "/Users/DuffQiu/share", "/home/vagrant/share"
+
+        node.vm.provider "virtualbox" do |vb|
+            vb.memory = "12288"
+            vb.cpus = 1
+            vb.name = "connections-demo-srv102"
+            vb.customize ["modifyvm", :id, "--audio", "none"] # turn audio off
+            vb.customize ["modifyvm", :id, "--clipboard", "disabled"] # disable clipboard
+        end
+        node.vm.provision "shell", privileged: false, inline: mount_nfs_volume, keep_color: true, name: "mount_nfs_volume"
+    end
+
+
+
+#    config.vm.define "connections-demo-srv103" do |node|   
+#        node.vm.hostname = "srv103" + $domain_name
+#        $ip = $base_segment + "103"
+#        node.vm.network "private_network", ip: $ip
+#        node.vm.network "public_network", bridge: $public_network_interface, auto_config: true
+#        #node.vm.synced_folder "/Users/DuffQiu/share", "/home/vagrant/share"
+#
+#        node.vm.provider "virtualbox" do |vb|
+#            vb.memory = "8192"
+#            vb.cpus = 1
+#            vb.name = "connections-demo-srv103"
+#            vb.customize ["modifyvm", :id, "--audio", "none"] # turn audio off
+#            vb.customize ["modifyvm", :id, "--clipboard", "disabled"] # disable clipboard
+#        end
+#        node.vm.provision "shell", privileged: false, inline: mount_nfs_volume, keep_color: true, name: "mount_nfs_volume"
+#    end
+#
+    #config.vm.synced_folder ".", "/vagrant", disabled: true
+    
+    config.ssh.forward_agent = true
+    config.ssh.forward_x11 = true
+    config.ssh.insert_key = false
+    config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
+    #
+    #
+    config.vm.provision "shell", privileged: true, inline: configure_etc_hosts, keep_color: true, name: "configure_etc_hosts"
+    config.vm.provision "shell", privileged: true, inline: configure_os_settings, keep_color: true, name: "configure_os_settings"
+    config.vm.provision "shell", privileged: true, inline: install_os_required_packages, keep_color: true, name: "install_os_required_packages"
+    
+
+    #config.vm.provision "shell", privileged: false, inline: configure_master_ssh_keys, keep_color: true, name: "configure_master_ssh_keys"
+    
+end

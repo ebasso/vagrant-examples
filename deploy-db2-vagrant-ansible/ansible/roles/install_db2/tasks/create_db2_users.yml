@@ -1,0 +1,56 @@
+---
+- name:    Create Binaries directory
+  file:    path=/opt/IBM/db2home state=directory mode=0755
+
+- name:    "Add dasadm1"
+  group:
+    name:  dasadm1
+    state: present
+
+- name:    "Add db2grp1"
+  group:
+    name:  db2grp1
+    state: present
+
+- name:    "Add db2fgrp1"
+  group:
+    name:  db2fgrp1
+    state: present
+
+- name:    "Add lcuser"
+  group:
+    name:  lcuser
+    state: present
+
+- name:    "Add dasusr1"
+  user:
+    name:  dasusr1
+    group: dasadm1
+    home:  /opt/IBM/db2home/dasusr1
+
+- name:    "Add db2inst1"
+  user:
+    name:  db2inst1
+    group: db2grp1
+    home:  /opt/IBM/db2home/db2inst1
+
+- name:    "Add db2fenc1"
+  user:
+    name:  db2fenc1
+    group: dasadm1
+    home:  /opt/IBM/db2home/db2fenc1
+
+- name:    "Add lcuser"
+  user:
+    name:  lcuser
+    group: lcuser
+    home:  /opt/IBM/db2home/lcuser
+
+#mkdir -p /opt/IBM/db2home
+#groupadd dasadm1
+#groupadd db2grp1
+#groupadd db2fgrp1
+#useradd dasusr1 -m -g dasadm1 -d /opt/IBM/db2home/dasusr1
+#useradd db2inst1 -m -g db2grp1 -d /opt/IBM/db2home/db2inst1
+#useradd db2fenc1 -m -g db2fgrp1 -d /opt/IBM/db2home/db2fenc1
+#useradd lcuser -m -d /opt/IBM/db2home/lcuser

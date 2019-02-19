@@ -1,0 +1,3 @@
+---
+__tmp_dir:               "{{ tmp_dir | default('/opt/IBM/Binaries') }}/db2"
+__logs_dir:              "{{ tmp_dir | default('/opt/IBM/Binaries') }}/logs"

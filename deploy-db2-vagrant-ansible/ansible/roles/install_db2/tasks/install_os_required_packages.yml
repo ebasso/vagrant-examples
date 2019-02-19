@@ -1,0 +1,23 @@
+---
+- name:          "Install pre-requisites Yum"
+  yum:
+    name: ['wget', 'curl', 'vim', 'net-tools', 'ntp', 'libstdc++.i686', 'pam.i686', 'libaio.x86_64']
+    state: present
+  when:
+    - ansible_os_family == "RedHat"
+    - (ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Amazon")
+
+- name:        "Start NTP Daemon"
+command:       "sudo systemctl start ntpd"
+
+- name:        "Enabled NTP Daemon"
+command:       "sudo systemctl enable ntpd"
+
+# install_os_required_packages = <<SCRIPT
+# sudo yum update
+# sudo yum install -y wget curl vim net-tools ntp
+# # enable ntp to sync time
+# echo 'sync time'
+# sudo systemctl start ntpd
+# sudo systemctl enable ntpd
+# SCRIPT

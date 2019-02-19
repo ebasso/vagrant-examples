@@ -1,1 +1,12 @@
 ---
+- name:          Install OS Required Packages
+  include_tasks: install_os_required_packages.yml
+
+- name:          Create DB2 users
+  include_tasks: create_db2_users.yml
+
+- name:          Install DB2
+  include_tasks: install_db2.yml
+
+- name:          Create Db2icrt
+  include_tasks: create_db2icrt_and_start.yml

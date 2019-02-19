@@ -15,8 +15,8 @@ install_file = "DB2_ESE_AUSI_Svr_11.1_Linux_86-64.tar.gz"
 
 configure_etc_hosts = <<SCRIPT
 cat > /etc/hosts <<EOF
-127.0.0.1           localhost localhost.localdomain 
-#{$base_segment}101 srv101 srv101.company.com     # DMGR, SharedArea, LDAP Server 
+127.0.0.1           localhost localhost.localdomain
+#{$base_segment}101 srv101 srv101.company.com     # DMGR, SharedArea, LDAP Server
 #{$base_segment}102 srv102 srv102.company.com     # WAS for Connections
 #{$base_segment}103 srv103 srv103.company.com     # WAS for Forms/Viewer/Conversion
 #{$base_segment}104 srv104 srv104.company.com     # DB2
@@ -36,59 +36,12 @@ sudo setenforce 0
 sudo sed -i 's/=enforcing/=disabled/g' /etc/selinux/config
 SCRIPT
 
-install_os_required_packages = <<SCRIPT
-sudo yum update
-sudo yum install -y wget curl vim net-tools ntp
-# enable ntp to sync time
-echo 'sync time'
-sudo systemctl start ntpd
-sudo systemctl enable ntpd
-SCRIPT
-
-install_db2 = <<SCRIPT
-yum -y install libstdc++.i686 pam.i686 libaio.x86_64 
-mkdir -p /opt/IBM/Binaries                           
-cd /opt/IBM/Binaries                                 
-wget #{ http_repository }#{ install_file }           
-tar -xzvf #{ install_file }                          
-cd /opt/IBM/Binaries/server_ese_u                    
-./db2_install -b /opt/ibm/db2/V11.1 -p SERVER -n     
-SCRIPT
-
-create_db2_users = <<SCRIPT
-mkdir -p /opt/IBM/db2home
-groupadd dasadm1
-groupadd db2grp1
-groupadd db2fgrp1
-useradd dasusr1 -m -g dasadm1 -d /opt/IBM/db2home/dasusr1
-useradd db2inst1 -m -g db2grp1 -d /opt/IBM/db2home/db2inst1
-useradd db2fenc1 -m -g db2fgrp1 -d /opt/IBM/db2home/db2fenc1
-useradd lcuser -m -d /opt/IBM/db2home/lcuser
-SCRIPT
-#echo "#{ dasusr1_password }" | passwd  dasusr1 --stdin"
-#echo "#{ db2inst1_password }" | passwd db2inst1 --stdin"
-#echo "#{ db2fenc1_password }" | passwd db2fenc1 --stdin"
-#echo "#{ lcuser_password }" | passwd lcuser --stdin"
-
-create_db2icrt_and_start = <<SCRIPT
-cd /opt/ibm/db2/V11.1/instance/
-./db2icrt -u db2fenc1 db2inst1
-sed -i 's/db2c_db2inst1/#db2c_db2inst1/g' /etc/services
-sed -i 's/DB2_db2inst1/#DB2_db2inst1/g' /etc/services
-echo "DB2_db2inst1      50000/tcp" |sudo tee --append /etc/services
-echo "DB2_db2inst1_1    50001/tcp" |sudo tee --append /etc/services
-echo "DB2_db2inst1_2    50002/tcp" |sudo tee --append /etc/services
-echo "DB2_db2inst1_3    50003/tcp" |sudo tee --append /etc/services
-echo "DB2_db2inst1_4    50004/tcp" |sudo tee --append /etc/services
-echo "DB2_db2inst1_END  50005/tcp" |sudo tee --append /etc/services
-su - db2inst1 -c 'db2start'
-SCRIPT
 
 Vagrant.configure("2") do |config|
 
     config.vm.box = "centos/7"
 
-    config.vm.define "db2-server" do |node|   
+    config.vm.define "db2-server" do |node|
         node.vm.hostname = "srv104" + $domain_name
         $ip = $base_segment + "104"
         node.vm.network "private_network", ip: $ip
@@ -99,7 +52,7 @@ Vagrant.configure("2") do |config|
             vb.memory = "4096"
             vb.cpus = 1
             vb.name = "db2-server"
-            
+
             #unless File.exist?("#{sharedarea_storage_disk}")
             #    vb.customize ['createmedium', 'disk', '--filename', "#{sharedarea_storage_disk}", '--format', 'VMDK', '--size', 50 * 1024]
             #end
@@ -111,7 +64,7 @@ Vagrant.configure("2") do |config|
         end
     end
 
-    #config.vm.synced_folder ".", "/vagrant", disabled: true    
+    #config.vm.synced_folder ".", "/vagrant", disabled: true
     config.ssh.forward_agent = true
     config.ssh.forward_x11 = true
     config.ssh.insert_key = false
@@ -119,7 +72,7 @@ Vagrant.configure("2") do |config|
     #
     #
     config.vm.provision "ansible" do |ansible|
-        ansible.playbook = "db2server.yml"
+        ansible.playbook = "ansible/db2server.yml"
         ansible.verbose = "vvv"
      end
     #config.vm.provision "shell", privileged: true, inline: configure_etc_hosts, keep_color: true, name: "configure_etc_hosts"
@@ -128,5 +81,5 @@ Vagrant.configure("2") do |config|
     #config.vm.provision "shell", privileged: true, inline: install_db2, keep_color: true, name: "install_db2"
     #config.vm.provision "shell", privileged: true, inline: create_db2_users, keep_color: true, name: "create_db2_users"
     #config.vm.provision "shell", privileged: true, inline: create_db2icrt_and_start, keep_color: true, name: "create_db2icrt_and_start"
-    
+
 end
