@@ -8,10 +8,10 @@
     - (ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "Amazon")
 
 - name:        "Start NTP Daemon"
-command:       "sudo systemctl start ntpd"
+  command:       "sudo systemctl start ntpd"
 
 - name:        "Enabled NTP Daemon"
-command:       "sudo systemctl enable ntpd"
+  command:       "sudo systemctl enable ntpd"
 
 # install_os_required_packages = <<SCRIPT
 # sudo yum update
