@@ -18,7 +18,7 @@
     echo "DB2_db2inst1_END  50005/tcp" |sudo tee --append /etc/services
   register:      cout
 
-- name:        "Start IBM DB2 Server
+- name:        "Start IBM DB2 Server"
   command:     "su - db2inst1 -c 'db2start'"
   register:      cout
   changed_when:  ( cout.stdout.find("DB2START processing was succesful") != -1)
