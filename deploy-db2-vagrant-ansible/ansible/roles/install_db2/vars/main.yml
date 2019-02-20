@@ -2,7 +2,7 @@
 __tmp_dir:          "{{ tmp_dir | default('/opt/IBM/Binaries') }}/db2"
 __logs_dir:         "{{ tmp_dir | default('/opt/IBM/Binaries') }}/logs"
 
-__http_repository:  "{{ http_repository | default('http://172.25.74.1:9080/db2/') }}"
+__http_repository:  "{{ http_repository | default('http://repo.company.com:9080/db2/') }}"
 
 __this_files:
   - { file_name:   "{{ this_file | default('DB2_ESE_AUSI_Svr_11.1_Linux_86-64.tar.gz') }}"   }

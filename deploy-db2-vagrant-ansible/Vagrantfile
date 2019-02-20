@@ -5,7 +5,7 @@ $domain_name = ".company.com"
 $base_segment = "172.25.74."
 $public_network_interface = "wlp3s0"
 
-http_repository = "http://172.25.74.1:9080/db2/"
+http_repository = "http://repo.company.com:9080/db2/"
 install_file = "DB2_ESE_AUSI_Svr_11.1_Linux_86-64.tar.gz"
 
 #dasusr1_password = "linux1"
@@ -16,6 +16,7 @@ install_file = "DB2_ESE_AUSI_Svr_11.1_Linux_86-64.tar.gz"
 configure_etc_hosts = <<SCRIPT
 cat > /etc/hosts <<EOF
 127.0.0.1           localhost localhost.localdomain
+#{$base_segment}1   repo.company.com              # HTTP repository for files
 #{$base_segment}101 srv101 srv101.company.com     # DMGR, SharedArea, LDAP Server
 #{$base_segment}102 srv102 srv102.company.com     # WAS for Connections
 #{$base_segment}103 srv103 srv103.company.com     # WAS for Forms/Viewer/Conversion
