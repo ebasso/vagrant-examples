@@ -76,11 +76,7 @@ Vagrant.configure("2") do |config|
         ansible.playbook = "ansible/db2server.yml"
         ansible.verbose = "vvv"
      end
-    #config.vm.provision "shell", privileged: true, inline: configure_etc_hosts, keep_color: true, name: "configure_etc_hosts"
-    #config.vm.provision "shell", privileged: true, inline: configure_os_settings, keep_color: true, name: "configure_os_settings"
-    #config.vm.provision "shell", privileged: true, inline: install_os_required_packages, keep_color: true, name: "install_os_required_packages"
-    #config.vm.provision "shell", privileged: true, inline: install_db2, keep_color: true, name: "install_db2"
-    #config.vm.provision "shell", privileged: true, inline: create_db2_users, keep_color: true, name: "create_db2_users"
-    #config.vm.provision "shell", privileged: true, inline: create_db2icrt_and_start, keep_color: true, name: "create_db2icrt_and_start"
+    config.vm.provision "shell", privileged: true, inline: configure_etc_hosts, keep_color: true, name: "configure_etc_hosts"
+    config.vm.provision "shell", privileged: true, inline: configure_os_settings, keep_color: true, name: "configure_os_settings"
 
 end
