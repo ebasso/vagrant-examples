@@ -3,11 +3,12 @@
 
 $domain_name = ".company.com"
 $base_segment = "172.17.8."
-$public_network_interface = "en0: Wi-Fi (AirPort)"
+$public_network_interface = "wlp3s0"
 
 
 configure_etc_hosts = <<SCRIPT
 cat >> /etc/hosts <<EOF
+#{$base_segment}1   repo.company.com              # HTTP repository for files
 #{ $base_segment}101 master01.company.com srv1
 #{ $base_segment}102 proxy01.company.com srv2
 #{ $base_segment}103 workernode01.company.com srv3
@@ -99,7 +100,7 @@ Vagrant.configure("2") do |config|
             vb.name = "k8s-demo-master01"
         end
     end
-    
+
     config.vm.define "k8s-demo-proxy01" do |node|
         node.vm.hostname = "proxy01" + $domain_name
         $ip = $base_segment + "102"
@@ -129,7 +130,7 @@ Vagrant.configure("2") do |config|
     end
 
     config.vm.synced_folder ".", "/vagrant", disabled: true
-    
+
     config.ssh.forward_agent = true
     config.ssh.forward_x11 = true
     config.ssh.insert_key = false
@@ -139,7 +140,5 @@ Vagrant.configure("2") do |config|
     config.vm.provision "shell", privileged: true, inline: configure_etc_hosts, keep_color: true, name: "configure_etc_hosts"
     #
     #config.vm.provision "shell", privileged: false, inline: configure_master_ssh_keys, keep_color: true, name: "configure_master_ssh_keys"
-    
+
 end
-
-
