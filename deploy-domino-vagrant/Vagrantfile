@@ -85,7 +85,8 @@ EOF
 SCRIPT
 
 install_domino = <<SCRIPT
-wget #{ http_repository }#{ install_file }
+cd /opt/IBM/Binaries
+wget -q #{ http_repository }#{ install_file }
 tar -xf #{ install_file }
 export LANG="en_US.UTF-8"
 export LANGUAGE="en_US.UTF-8"
