@@ -48,6 +48,8 @@ chown -R notes.notes /domino
 SCRIPT
 
 generate_domino_response_file = <<SCRIPT
+mkdir -p /opt/IBM/Binaries
+cd /opt/IBM/Binaries
 cat > /opt/IBM/Binaries/domino10.rsp <<EOF
 -G licenseAccepted=true
 -W InstallDataOnlyOptionPanel.InstallDataOnly=false
@@ -83,8 +85,6 @@ EOF
 SCRIPT
 
 install_domino = <<SCRIPT
-mkdir -p /opt/IBM/Binaries
-cd /opt/IBM/Binaries
 wget #{ http_repository }#{ install_file }
 tar -xf #{ install_file }
 export LANG="en_US.UTF-8"
