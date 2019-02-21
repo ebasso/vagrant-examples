@@ -17,6 +17,7 @@ vagrant destroy
 
 * **deploy-db2-vagrant** - Cria uma VM com CentOS, com o DB2 instalado via shell script.
 * **deploy-db2-vagrant-ansible** - Cria uma VM com CentOS, com o DB2 instalado via Ansible.
+* **deploy-domino-vagrant** - Cria uma VM com CentOS, com o Domino instalado via shell script.
 * **example01-webserver-shell** - Criar uma VM com CentOS, com o Apache instalado via arquivo shell script.
 * **example02-webserver-inline** - Criar uma VM com CentOS, com o Apache instalado via shell inline.
 * **example03-webserver-ansible** - Criar uma VM com CentOS, com o Apache instalado via Ansible.
@@ -29,6 +30,7 @@ vagrant destroy
 
 * **deploy-db2-vagrant** - Single box with CentOS, with DB2 installed using shell script.
 * **deploy-db2-vagrant-ansible** - Single box with CentOS, with DB2 installed using Ansible.
+* **deploy-domino-vagrant** - Single box with CentOS, with Domino installed using shell script.
 * **example01-webserver-shell** - Single box with CentOS, with Apache installed via shell script file.
 * **example02-webserver-inline** - Single box with CentOS, with Apache installed via shell provision.
 * **example03-webserver-ansible** - Single box with CentOS, with Apache installed via Ansible.

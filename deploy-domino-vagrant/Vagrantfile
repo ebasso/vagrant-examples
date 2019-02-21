@@ -33,7 +33,7 @@ SCRIPT
 
 install_os_required_packages = <<SCRIPT
 sudo yum update
-sudo yum install -y wget curl net-tools ntp bc
+sudo yum install -y wget curl net-tools ntp bc perl
 # enable ntp to sync time
 echo 'sync time'
 sudo systemctl start ntpd
@@ -47,10 +47,7 @@ useradd notes -m -g notes -d /domino/notesdata
 chown -R notes.notes /domino
 SCRIPT
 
-
-install_domino = <<SCRIPT
-mkdir -p /opt/IBM/Binaries
-cd /opt/IBM/Binaries
+generate_domino_response_file = <<SCRIPT
 cat > /opt/IBM/Binaries/domino10.rsp <<EOF
 -G licenseAccepted=true
 -W InstallDataOnlyOptionPanel.InstallDataOnly=false
@@ -83,8 +80,17 @@ cat > /opt/IBM/Binaries/domino10.rsp <<EOF
 -P HelpFeature.active=true
 -P OSIntegFeature.active=true
 EOF
+SCRIPT
+
+install_domino = <<SCRIPT
+mkdir -p /opt/IBM/Binaries
+cd /opt/IBM/Binaries
 wget #{ http_repository }#{ install_file }
 tar -xf #{ install_file }
+export LANG="en_US.UTF-8"
+export LANGUAGE="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+export LC_CTYPE="en_US.UTF-8"
 /bin/bash -c "/opt/IBM/Binaries/linux64/domino/install -silent -options /opt/IBM/Binaries/domino10.rsp"
 SCRIPT
 
@@ -127,6 +133,7 @@ Vagrant.configure("2") do |config|
     config.vm.provision "shell", privileged: true, inline: configure_os_settings, keep_color: true, name: "configure_os_settings"
     config.vm.provision "shell", privileged: true, inline: install_os_required_packages, keep_color: true, name: "install_os_required_packages"
     config.vm.provision "shell", privileged: true, inline: create_notes_users, keep_color: true, name: "create_notes_users"
+    config.vm.provision "shell", privileged: true, inline: generate_domino_response_file, keep_color: true, name: "generate_domino_response_file"
     config.vm.provision "shell", privileged: true, inline: install_domino, keep_color: true, name: "install_domino"
 
 end
