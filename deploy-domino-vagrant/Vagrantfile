@@ -7,12 +7,6 @@ $public_network_interface = "wlp3s0"
 
 http_repository = "http://repo.company.com:9080/domino/"
 install_file = "DOM_SVR_V10.0.1_64_BIT_Lin.tar"
-response_file=domino10_response.dat
-
-#dasusr1_password = "linux1"
-#db2inst1_password = "linux1"
-#db2fenc1_password = "linux1"
-#lcuser_password = "linux1"
 
 configure_etc_hosts = <<SCRIPT
 cat > /etc/hosts <<EOF
