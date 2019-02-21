@@ -6,7 +6,7 @@ $base_segment = "172.25.74."
 $public_network_interface = "wlp3s0"
 
 http_repository = "http://repo.company.com:9080/domino/"
-install_file = "DOM_SVR_V10.0.1_64_BIT_Lin.tar"
+install_file = "DOM_SVR_V10.0.1_64_BIT_Lnx.tar"
 
 configure_etc_hosts = <<SCRIPT
 cat > /etc/hosts <<EOF
